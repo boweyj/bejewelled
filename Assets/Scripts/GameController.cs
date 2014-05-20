@@ -15,6 +15,7 @@ public class GameController : MonoBehaviour {
 	public GameObject square;
 	public GameObject selected;
 	public GameObject timeBar;
+	public GameObject hintHighlight;
 
 	public GUIText scoreText;
 	public GUIText timerText;
@@ -129,8 +130,10 @@ public class GameController : MonoBehaviour {
 				{
 					nextHint = Time.time + hintRate;
 					Vector2 hint = GetComponent<MatchingAI>().CheckForPotentialMatches();
-					Debug.Log ("Displaying hint...");
-					// display hint
+					if(hint.x != -1 && hint.y != -1)
+					{
+						//DisplayHint (hint);
+					}
 				}
 			}
 			else
@@ -145,6 +148,14 @@ public class GameController : MonoBehaviour {
 		UpdateTimer ();
 	}
 
+
+	void DisplayHint(Vector2 hint)
+	{
+		Vector2 coords = new Vector2 (hint.x + .5f, hint.y + .5f);
+		GameObject square = Instantiate (hintHighlight, coords, Quaternion.identity) as GameObject;
+		square.renderer.material.color = Color.white;
+		Destroy (square, 0.5f);
+	}
 	// Updates timer information and sets the appropriate gui elements
 	void UpdateTimer()
 	{

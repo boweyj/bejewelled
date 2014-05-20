@@ -95,7 +95,6 @@ public class JewelController : MonoBehaviour {
 			// Nothing is currently selected, set current jewel as selected
 			if(Controller.GetComponent<GameController>().selected == null)
 			{
-				//Debug.Log ("selected is null!!");
 				Controller.GetComponent<GameController>().selected = gameObject;
 			}
 
