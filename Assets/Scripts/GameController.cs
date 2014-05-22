@@ -16,7 +16,8 @@ public class GameController : MonoBehaviour {
 	public GameObject selected;
 	public GameObject timeBar;
 	public GameObject hintHighlight;
-
+	public GameObject avatarSpawn;
+	
 	public GUIText scoreText;
 	public GUIText timerText;
 	public GUIText gameOverText;
@@ -59,6 +60,7 @@ public class GameController : MonoBehaviour {
 		restartText.enabled = false;
 		scoreText.text = "Score: " + score;
 		timerText.text = "Time Remaining: " + (int)timeRemaining;
+
 
 		// Initialize Board
 		jewels = new GameObject[boardWidth];
@@ -138,8 +140,8 @@ public class GameController : MonoBehaviour {
 			}
 			else
 			{
-				GameOver ();
-				noMatchesText.enabled = true;
+				//GameOver ();
+			//	noMatchesText.enabled = true;
 			}
 		}
 
@@ -177,18 +179,18 @@ public class GameController : MonoBehaviour {
 			timeBar.renderer.material.color = Color.red;
 		}
 
-		timeBar.transform.localScale = new Vector3 (timeBar.transform.localScale.x, (7.0f * timePercentage), 1);
+		timeBar.transform.localScale = new Vector3 (timeBar.transform.localScale.x, (5.5f * timePercentage), 1);
 
 		int minutes = (int)timeRemaining / 60;
 		int seconds = (int)timeRemaining % 60;
 
 		if(seconds < 10)
 		{
-			timerText.text = "Time Remaining: " + minutes + ":0" + seconds;
+			timerText.text = minutes + ":0" + seconds;
 		}
 		else 
 		{
-			timerText.text = "Time Remaining: " + minutes + ":" + seconds;
+			timerText.text = minutes + ":" + seconds;
 		}
 	}
 	// pops element off of spawn stack and adds it to game
@@ -209,7 +211,7 @@ public class GameController : MonoBehaviour {
 		timeRemaining = 0;
 		if (Input.GetKeyDown (KeyCode.Space)) 
 		{
-			Application.LoadLevel (0);
+			Application.LoadLevel (1);
 		}
 	}
 }
