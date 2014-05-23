@@ -5,213 +5,109 @@ using System.Collections.Generic;
 public class GameController : MonoBehaviour {
 
 	// Jewel Prefab Objects
-	public GameObject jewel_1;
-	public GameObject jewel_2;
-	public GameObject jewel_3;
-	public GameObject jewel_4;
-	public GameObject jewel_5;
-	public GameObject jewel_6;
-	public GameObject jewel_7;
-	public GameObject square;
+
 	public GameObject selected;
-	public GameObject timeBar;
 	public GameObject hintHighlight;
 	public GameObject avatarSpawn;
-	
-	public GUIText scoreText;
-	public GUIText timerText;
-	public GUIText gameOverText;
-	public GUIText restartText;
-	public GUIText noMatchesText;
 
-	public GameObject[][] squares;
-	
-	public int boardWidth;
-	public int score;
-	public int timeLimit;
-	public int hintRate;
-
-	public float nextHint;
 
 	public bool isEnabled;
 
-	private float spawnRate;
-	private float nextSpawn;
-	private float timeRemaining;
+	public static int roundNum = 1;
 
-	private GameObject[] jewels;
-	private Stack<int> spawnStack;
+	private bool roundFourPaused;
 
+	//private Leaderboard leaderboard;
 
 
 	// Called at the start of game; initializes board and variables
 	void Start () 
 	{
 		// Initializations
-		timeRemaining = timeLimit;
 		selected = null;
 		isEnabled = true;
-		spawnRate = .1f;
+		roundFourPaused = false;
+		Time.timeScale = 1;
+		gameObject.AddComponent<Leaderboard> ();
 
-		spawnStack = new Stack<int> ();
-
-		gameOverText.enabled = false;
-		noMatchesText.enabled = false;
-		restartText.enabled = false;
-		scoreText.text = "Score: " + score;
-		timerText.text = "Time Remaining: " + (int)timeRemaining;
-
-
-		// Initialize Board
-		jewels = new GameObject[boardWidth];
-		squares = new GameObject[boardWidth][];
-
-		for(int i=0; i<boardWidth; i++)
-		{
-			squares[i] = new GameObject[boardWidth];
-			for(int j=0; j<boardWidth; j++)
-			{
-				squares[i][j] = Instantiate (square, new Vector2(i+.5f, j+.5f), Quaternion.identity) as GameObject;
-			}
-		}
-
-		jewels [0] = jewel_1;
-		jewels [1] = jewel_2;
-		jewels [2] = jewel_3;
-		jewels [3] = jewel_4;
-		jewels [4] = jewel_5;
-		jewels [5] = jewel_6;
-		jewels [6] = jewel_7;
- 
-		SpawnBoard ();
+		gameObject.GetComponent<SpawnPieces> ().SpawnBoard ();
 	}
 
-	// Create board and spawn initial pieces
-	void SpawnBoard()
-	{
-		for(int i=0; i<boardWidth; i++)
-		{
-			SpawnRow ();
-		}
-	}
-
-	// Spawn a single jewel at col
-	public void SpawnJewelAtColumn(int col)
-	{
-		spawnStack.Push (col);
-	}
-	
-	// Spawns an entire row of pieces
-	void SpawnRow()
-	{
-		for(int i=0; i<boardWidth; i++)
-		{
-			SpawnJewelAtColumn(i);
-		}
-	}
-	
 	// Called every frame
 	void Update () 
 	{
-		// If spawn stack is not empty, spawn new pieces...
-		if (spawnStack.Count > 0) {
-			if (nextSpawn <= Time.time) {
-					nextSpawn = Time.time + spawnRate;
-					SpawnFromStack ();
+		// If there are no pieces to spawn, check for matches
+		if(!gameObject.GetComponent<SpawnPieces> ().CheckSpawn ())
+		{
+			if (Time.time > 9.0f)
+			{
+				GetComponent<SpawnPieces>().spawnRate = 0.5f;
+				gameObject.GetComponent<FindMatches>().CheckMatches ();
 			}
 		}
-		// ... else start looking for matches
-		else if (Time.time > 8.0f)
-		{
-			if(GetComponent<MatchingAI>().DoesMatchExist())
-			{
-				spawnRate = 0.5f;
-				GetComponent<FindMatches>().GetMatches ();
+		GetComponent<GUIController>().UpdateGUI ();
 
-				if(nextHint <= Time.time && Time.time > 10.0f)
+		// Rounds 1-4 are training
+		if(roundNum <= 4 && GetComponent<GUIController>().timeRemaining <= 0)
+		{
+			// If timer is down to 0, end round and spawn next one
+			if(roundNum == 1 || roundNum == 3 || roundNum == 4)
+			{
+				GetComponent<GUIController>().EndRound();
+			}
+			else if(roundNum == 2)
+			{
+				StartCoroutine("ScheduleWait");
+				if(Input.GetKeyDown (KeyCode.Space))
 				{
-					nextHint = Time.time + hintRate;
-					Vector2 hint = GetComponent<MatchingAI>().CheckForPotentialMatches();
-					if(hint.x != -1 && hint.y != -1)
-					{
-						//DisplayHint (hint);
-					}
+					GetComponent<GUIController>().EndRound();
 				}
 			}
-			else
+			// else if timer is at half and in round 4 generate timer
+		}
+		else if(roundNum <=13 && GetComponent<GUIController>().timeRemaining <= 0)
+		{
+			// normal gameplay
+			if(roundNum % 3 == 0)
 			{
-				//GameOver ();
-			//	noMatchesText.enabled = true;
+				//Debug.Log ("Pairwise Comparison");
+				// if gameplay is over, generate pairwise comparison
+			}
+			GetComponent<Leaderboard>().DisplayLeaderboard ();
+			Time.timeScale = 0;
+			if(Input.GetKeyDown(KeyCode.Space))
+			{
+				GetComponent<GUIController>().EndRound();
+			}
+			Debug.Log ("Generate Leaderboards");
+			Debug.Log ("End Round" + GameController.roundNum);
+			// generate leaderboards
+			// increment roundNum and restart for next round
+		}
+		else if(roundNum == 4 && GetComponent<GUIController>().timeRemaining <= GetComponent<GUIController>().timeLimit/2)
+		{
+			if(!roundFourPaused)
+			{
+				roundFourPaused = true;
+				isEnabled = false;
+				StartCoroutine ("ScheduleWait");
+				if(Input.GetKeyDown (KeyCode.Space))
+				{
+					Time.timeScale = 1;
+				}
 			}
 		}
-
-		scoreText.text = "Score: " + score.ToString ("n0");
-
-		UpdateTimer ();
+		else if(GetComponent<GUIController>().timeRemaining <= 0)
+		{
+			// end study
+		}
 	}
 
 
-	void DisplayHint(Vector2 hint)
+	public IEnumerator ScheduleWait()
 	{
-		Vector2 coords = new Vector2 (hint.x + .5f, hint.y + .5f);
-		GameObject square = Instantiate (hintHighlight, coords, Quaternion.identity) as GameObject;
-		square.renderer.material.color = Color.white;
-		Destroy (square, 0.5f);
-	}
-	// Updates timer information and sets the appropriate gui elements
-	void UpdateTimer()
-	{
-		timeRemaining = (float)timeLimit - Time.timeSinceLevelLoad;
-
-		if(timeRemaining <= 0)
-		{
-			GameOver();
-
-		}
-		float timePercentage = (float)timeRemaining / (float)timeLimit;
-
-		if(timePercentage < .5 && timePercentage > .2)
-		{
-			timeBar.renderer.material.color = Color.yellow;
-		}
-		else if(timePercentage < .2)
-		{
-			timeBar.renderer.material.color = Color.red;
-		}
-
-		timeBar.transform.localScale = new Vector3 (timeBar.transform.localScale.x, (5.5f * timePercentage), 1);
-
-		int minutes = (int)timeRemaining / 60;
-		int seconds = (int)timeRemaining % 60;
-
-		if(seconds < 10)
-		{
-			timerText.text = minutes + ":0" + seconds;
-		}
-		else 
-		{
-			timerText.text = minutes + ":" + seconds;
-		}
-	}
-	// pops element off of spawn stack and adds it to game
-	void SpawnFromStack()
-	{
-		float col = (float)spawnStack.Pop () + 0.5f;
-		Vector3 spawnLoc = new Vector3(col, 9.0f, -0.5f);
-		Instantiate (jewels[Random.Range(0, 7)], spawnLoc, Quaternion.identity);
+		yield return StartCoroutine(GetComponent<GUIController>().WaitToContinue());
 	}
 
-	// Disable gameplay and display game over gui elements
-	void GameOver()
-	{ 
-		gameOverText.enabled = true;
-		restartText.enabled = true;
-		isEnabled = false;
 
-		timeRemaining = 0;
-		if (Input.GetKeyDown (KeyCode.Space)) 
-		{
-			Application.LoadLevel (1);
-		}
-	}
 }

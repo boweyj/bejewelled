@@ -6,12 +6,19 @@ public class JewelController : MonoBehaviour {
 	public GameObject Controller;
 	public GUIText scoreText;
 	public bool isSelected;
+	public ParticleSystem explodePS;
 
 	public float xPos;
 	private int x, y, dx, dy;
-	
+	private int boardWidth = 8;
+
+	private bool isLineStrike;
+	private bool isExploding;
+
 	void Start()
 	{
+		isLineStrike = false;
+		isExploding = false;
 		Controller = GameObject.Find ("GameController");
 		isSelected = false;
 		xPos = gameObject.transform.position.x;
@@ -26,23 +33,34 @@ public class JewelController : MonoBehaviour {
 	// removes current jewel from the game and calls respawn at the same column
 	public void RemoveJewel()
 	{
-		// Respawn Jewel at column
-		int col = (int)transform.position.x;
-
-		Vector3 jewelLoc = Camera.main.WorldToScreenPoint (new Vector3 (gameObject.transform.position.x, gameObject.transform.position.y, -.5f));
-		Vector3 jewelScreenLoc = new Vector3 (jewelLoc.x / Screen.width, jewelLoc.y / Screen.height);
-
-		Controller.GetComponent<GameController> ().score += 10;
-		GUIText text = Instantiate (scoreText, jewelScreenLoc, Quaternion.identity) as GUIText;
-		text.text = "10";
-
-		if(gameObject != null)
+		if(isLineStrike)
 		{
-					audio.Play ();
-					Destroy (gameObject, audio.clip.length);
+			LineStrike();
 		}
+		else if(isExploding)
+		{
+			Explode();
+		}
+		else
+		{
+			// Respawn Jewel at column
+			int col = (int)transform.position.x;
 
-		Controller.GetComponent<GameController> ().SpawnJewelAtColumn (col);
+			Vector3 jewelLoc = Camera.main.WorldToScreenPoint (new Vector3 (gameObject.transform.position.x, gameObject.transform.position.y, -.5f));
+			Vector3 jewelScreenLoc = new Vector3 (jewelLoc.x / Screen.width, jewelLoc.y / Screen.height);
+
+			Controller.GetComponent<GUIController> ().score += 10;
+			GUIText text = Instantiate (scoreText, jewelScreenLoc, Quaternion.identity) as GUIText;
+			text.text = "10";
+
+			if(gameObject != null)
+			{
+						audio.Play ();
+						Destroy (gameObject, audio.clip.length);
+			}
+
+			Controller.GetComponent<SpawnPieces> ().SpawnJewelAtColumn (col, Random.Range(0, 7));
+		}
 	}
 
 	// compares 2 game objects and returns true if they are in adjacent squares, false otherwise
@@ -72,6 +90,28 @@ public class JewelController : MonoBehaviour {
 			}
 		}
 		return false;
+	}
+
+	public void MakeLineStrikeJewel()
+	{
+		isLineStrike = true;
+		// add particle system
+	}
+
+	public void MakeExplodingJewel()
+	{
+		isLineStrike = false;
+		// add particle system
+	}
+
+	public void LineStrike()
+	{
+
+	}
+
+	public void Explode()
+	{
+
 	}
 
 	// swaps the location of 2 game objects
@@ -150,12 +190,10 @@ public class JewelController : MonoBehaviour {
 			dx = (int)pos.x;
 			dy = (int)pos.y;
 
-			int boardWidth = Controller.GetComponent<GameController>().boardWidth;
-
 			if(dx < boardWidth && dy < boardWidth)
 			{
-				GameObject homeSquare = Controller.GetComponent<GameController> ().squares[x][y].GetComponent<SquareController>().jewel;
-				GameObject newSquare = Controller.GetComponent<GameController> ().squares[dx][dy].GetComponent<SquareController> ().jewel;
+				GameObject homeSquare = Controller.GetComponent<SpawnPieces> ().squares[x][y].GetComponent<SquareController>().jewel;
+				GameObject newSquare = Controller.GetComponent<SpawnPieces> ().squares[dx][dy].GetComponent<SquareController> ().jewel;
 
 
 				if(isAdjacent (newSquare, homeSquare))
