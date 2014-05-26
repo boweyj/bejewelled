@@ -41,7 +41,7 @@ public class GameController : MonoBehaviour {
 		{
 			if (Time.time > 9.0f)
 			{
-				GetComponent<SpawnPieces>().spawnRate = 0.5f;
+				GetComponent<SpawnPieces>().spawnRate = 0.3f;
 				gameObject.GetComponent<FindMatches>().CheckMatches ();
 			}
 		}
@@ -63,7 +63,6 @@ public class GameController : MonoBehaviour {
 					GetComponent<GUIController>().EndRound();
 				}
 			}
-			// else if timer is at half and in round 4 generate timer
 		}
 		else if(roundNum <=13 && GetComponent<GUIController>().timeRemaining <= 0)
 		{
@@ -94,6 +93,7 @@ public class GameController : MonoBehaviour {
 				if(Input.GetKeyDown (KeyCode.Space))
 				{
 					Time.timeScale = 1;
+					isEnabled = true;
 				}
 			}
 		}

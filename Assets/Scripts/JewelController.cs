@@ -4,16 +4,20 @@ using System.Collections;
 public class JewelController : MonoBehaviour {
 
 	public GameObject Controller;
+	public GameObject highlight;
 	public GUIText scoreText;
 	public bool isSelected;
 	public ParticleSystem explodePS;
 
 	public float xPos;
-	private int x, y, dx, dy;
+	private int x, y, dx, dy;  // varbiables to check adjacency
 	private int boardWidth = 8;
 
 	private bool isLineStrike;
 	private bool isExploding;
+
+	public Texture explosionTexture;
+	public Texture lineStrikeTexture;
 
 	void Start()
 	{
@@ -28,6 +32,10 @@ public class JewelController : MonoBehaviour {
 	{
 		Vector2 pos = new Vector2 (xPos, gameObject.transform.position.y);
 		gameObject.transform.position = pos;
+		if(rigidbody2D.transform.position.y >9.5f)
+		{
+			Destroy(gameObject);
+		}
 	}
 
 	// removes current jewel from the game and calls respawn at the same column
@@ -36,6 +44,7 @@ public class JewelController : MonoBehaviour {
 		if(isLineStrike)
 		{
 			LineStrike();
+
 		}
 		else if(isExploding)
 		{
@@ -46,20 +55,13 @@ public class JewelController : MonoBehaviour {
 			// Respawn Jewel at column
 			int col = (int)transform.position.x;
 
-			Vector3 jewelLoc = Camera.main.WorldToScreenPoint (new Vector3 (gameObject.transform.position.x, gameObject.transform.position.y, -.5f));
-			Vector3 jewelScreenLoc = new Vector3 (jewelLoc.x / Screen.width, jewelLoc.y / Screen.height);
-
-			Controller.GetComponent<GUIController> ().score += 10;
-			GUIText text = Instantiate (scoreText, jewelScreenLoc, Quaternion.identity) as GUIText;
-			text.text = "10";
-
 			if(gameObject != null)
 			{
-						audio.Play ();
-						Destroy (gameObject, audio.clip.length);
+				audio.Play ();
+				Destroy (gameObject, audio.clip.length);
+				Controller.GetComponent<SpawnPieces> ().SpawnJewelAtColumn (col, Random.Range(0, 6));
+				GameObject.FindWithTag ("GameController").GetComponent<GUIController>().score += 10;
 			}
-
-			Controller.GetComponent<SpawnPieces> ().SpawnJewelAtColumn (col, Random.Range(0, 7));
 		}
 	}
 
@@ -95,22 +97,52 @@ public class JewelController : MonoBehaviour {
 	public void MakeLineStrikeJewel()
 	{
 		isLineStrike = true;
-		// add particle system
+		renderer.material.mainTexture = lineStrikeTexture;
 	}
 
 	public void MakeExplodingJewel()
 	{
-		isLineStrike = false;
-		// add particle system
+		isExploding = true;
+		renderer.material.mainTexture = explosionTexture;
 	}
 
 	public void LineStrike()
 	{
+		isLineStrike = false;
+		int row = (int)gameObject.transform.position.x;
+		int column = (int)gameObject.transform.position.y;
+		
+		for(int i=0; i<boardWidth; i++)
+		{
+			for(int j=0; j<boardWidth; j++)
+			{
+				if(i == row || j == column)
+				{
+					GameObject.FindWithTag ("GameController").GetComponent<FindMatches>().RemoveJewelAtCoords(i, j);
+				}
+			}
+		}
 
 	}
 
 	public void Explode()
 	{
+		isExploding = false;
+		int column = (int)gameObject.transform.position.x;
+		int row = (int)gameObject.transform.position.y;
+	
+		for(int i=0; i<boardWidth; i++)
+		{
+			for(int j=0; j<boardWidth; j++)
+			{
+				if(i>=column-1 && i<=column+1 && j>=row-1 && j<=row+1)
+				{
+					//GameObject temp = GetComponent<SpawnPieces>().squares[j][i];
+					GameObject.FindWithTag("GameController").GetComponent<FindMatches>().RemoveJewelAtCoords(i, j);
+				}
+			}
+
+		}
 
 	}
 
