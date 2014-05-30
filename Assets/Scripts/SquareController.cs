@@ -7,11 +7,18 @@ public class SquareController : MonoBehaviour {
 
 	void OnTriggerExit2D(Collider2D other)
 	{
-		jewel = null;
+		if(other.tag.Equals ("Collider"))
+		{
+			jewel = null;
+		}
 	}
 
 	void OnTriggerStay2D(Collider2D other)
 	{
-		jewel = other.gameObject;
+		if(other.tag.Equals ("Collider"))
+		{
+			jewel = other.gameObject;
+
+		}
 	}
 }
