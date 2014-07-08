@@ -23,3 +23,5 @@ EditorBuildSettings:
     path: Assets/MatchThemAssets/Scenes/T4_Preference_Rating.unity
   - enabled: 1
     path: Assets/MatchThemAssets/Scenes/MainInstructions.unity
+  - enabled: 1
+    path: Assets/MatchThemAssets/Scenes/FinalScene.unity
